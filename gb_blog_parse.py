@@ -9,8 +9,8 @@ from database.database import Database
 
 class GbBlogParse:
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:88.0) "
-        "Gecko/20100101 Firefox/88.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0)  "
+                      "Gecko/20100101 Firefox/89.0"
     }
     __parse_time = 0
 
@@ -41,9 +41,11 @@ class GbBlogParse:
         return task
 
     def run(self):
+        # print(self.tasks)
         while True:
             try:
                 task = self.tasks.pop(0)
+                # print(task)
                 task()
             except IndexError:
                 break
@@ -87,6 +89,7 @@ class GbBlogParse:
             "author_data": {
                 "url": urljoin(response.url, author_name_tag.parent.attrs.get("href")),
                 "name": author_name_tag.text,
+                "gb_id": int(str(urljoin(response.url, author_name_tag.parent.attrs.get("href"))).split('/')[-1:][0]),
             },
             "tags_data": [
                 {"name": tag.text, "url": urljoin(response.url, tag.attrs.get("href"))}
@@ -111,3 +114,4 @@ if __name__ == "__main__":
     parser = GbBlogParse("https://gb.ru/posts", db_client, 0.5)
     parser.run()
     print(1)
+#

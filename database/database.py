@@ -18,7 +18,44 @@ class Database:
         return instance
 
     def create_comments(self, post_id, data):
+
         session = self.maker()
+        while True:
+            try:
+                comment = data.pop(0)
+            except IndexError:
+                break
+            author = self.get_or_create(
+                session,
+                models.Author,
+                "url",
+                dict(
+                    name=comment["comment"]["user"]["full_name"],
+                    url=comment["comment"]["user"]["url"],
+                    gb_id=comment["comment"]["user"]["id"],
+                    # img_path=comment["comment"]["user"]["image"]["url"],#######
+
+                ),
+            )
+            if not author.gb_id:
+                author.gb_id = comment["comment"]["user"]["id"]
+            comment_db = self.get_or_create(session, models.Comment, "id", comment["comment"],)
+            comment_db.author = author
+            comment_db.post_id = post_id
+            session.add(comment_db)
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
+            data.extend(comment["comment"]["children"])
+        session.close()
+
+    def create_comments1(self, post_id, data):
+        session = self.maker()
+
+        for comment_el in data["comment"]:
+            print(comment_el["user"])
+
         while True:
             try:
                 comment = data.pop(0)
@@ -36,7 +73,7 @@ class Database:
             )
             if not author.gb_id:
                 author.gb_id = comment["comment"]["user"]["id"]
-            comment_db = self.get_or_create(session, models.Comment, "id", comment["comment"],)
+            comment_db = self.get_or_create(session, models.Comment, "id", comment["comment"], )
             comment_db.author = author
             comment_db.post_id = post_id
             session.add(comment_db)
@@ -46,6 +83,8 @@ class Database:
                 session.rollback()
             data.extend(comment["comment"]["children"])
         session.close()
+
+
 
     def add_post(self, data):
         session = self.maker()
@@ -64,6 +103,4 @@ class Database:
             session.rollback()
         finally:
             session.close()
-        print(data["post_data"]["id"])
-        print(data["comments_data"])
         self.create_comments(data["post_data"]["id"], data["comments_data"])
